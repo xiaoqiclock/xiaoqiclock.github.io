@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>LXJBOOK</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<script>
+		window.onload = function() {
+			if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) { // 手机设备
+				window.location.href = "phone/index.html";
+			} else { // 电脑设备
+				window.location.href = "com/index.html";
+			}
+		};
+	</script>
+</head>
+<body style="background-color: #FFE282">
+</body>
+</html>
