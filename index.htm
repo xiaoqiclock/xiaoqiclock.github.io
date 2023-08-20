@@ -1,0 +1,57 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="zh-cn">
+<meta http-equiv="Content-Type" content="text/html; charset=gb2312">
+<title>主页</title>
+<script language="JavaScript">
+<!--
+function FP_preloadImgs() {//v1.0
+ var d=document,a=arguments; if(!d.FP_imgs) d.FP_imgs=new Array();
+ for(var i=0; i<a.length; i++) { d.FP_imgs[i]=new Image; d.FP_imgs[i].src=a[i]; }
+}
+
+function FP_swapImg() {//v1.0
+ var doc=document,args=arguments,elm,n; doc.$imgSwaps=new Array(); for(n=2; n<args.length;
+ n+=2) { elm=FP_getObjectByID(args[n]); if(elm) { doc.$imgSwaps[doc.$imgSwaps.length]=elm;
+ elm.$src=elm.src; elm.src=args[n+1]; } }
+}
+
+function FP_getObjectByID(id,o) {//v1.0
+ var c,el,els,f,m,n; if(!o)o=document; if(o.getElementById) el=o.getElementById(id);
+ else if(o.layers) c=o.layers; else if(o.all) el=o.all[id]; if(el) return el;
+ if(o.id==id || o.name==id) return o; if(o.childNodes) c=o.childNodes; if(c)
+ for(n=0; n<c.length; n++) { el=FP_getObjectByID(id,c[n]); if(el) return el; }
+ f=o.forms; if(f) for(n=0; n<f.length; n++) { els=f[n].elements;
+ for(m=0; m<els.length; m++){ el=FP_getObjectByID(id,els[n]); if(el) return el; } }
+ return null;
+}
+// -->
+</script>
+</head>
+
+<body bgcolor="#E8FFFF" onload="FP_preloadImgs(/*url*/'button4.gif',/*url*/'button5.gif',/*url*/'button7.gif',/*url*/'button8.gif',/*url*/'buttonA.gif',/*url*/'buttonB.gif',/*url*/'buttonD.gif',/*url*/'buttonE.gif',/*url*/'button10.gif',/*url*/'button11.gif',/*url*/'button13.gif',/*url*/'button14.gif',/*url*/'button17.gif',/*url*/'button18.gif',/*url*/'button1E.jpg',/*url*/'button1F.jpg')">
+
+<p align="center"><font size="6">欢迎来到xiaoqiclock.github.io</font></p>
+<hr>
+<p align="center"><font color="#000080">&nbsp;<font size="5">这个网站有以下功能：</font></font></p>
+<p align="center"><a href="ChatGPT.html">
+<img border="0" id="img1" src="button3.gif" height="40" width="200" alt="ChatGPT镜像" onmouseover="FP_swapImg(1,0,/*id*/'img1',/*url*/'button4.gif')" onmouseout="FP_swapImg(0,0,/*id*/'img1',/*url*/'button3.gif')" onmousedown="FP_swapImg(1,0,/*id*/'img1',/*url*/'button5.gif')" onmouseup="FP_swapImg(0,0,/*id*/'img1',/*url*/'button4.gif')" fp-style="fp-btn: Metal Rectangle 1; fp-font: SimSun-ExtB; fp-transparent: 1" fp-title="ChatGPT镜像"></a></p>
+<p align="center"><a href="musicplay.html">
+<img border="0" id="img2" src="button6.gif" height="40" width="200" alt="Phigros" onmouseover="FP_swapImg(1,0,/*id*/'img2',/*url*/'button7.gif')" onmouseout="FP_swapImg(0,0,/*id*/'img2',/*url*/'button6.gif')" onmousedown="FP_swapImg(1,0,/*id*/'img2',/*url*/'button8.gif')" onmouseup="FP_swapImg(0,0,/*id*/'img2',/*url*/'button7.gif')" fp-style="fp-btn: Metal Rectangle 1; fp-font: SimSun-ExtB; fp-transparent: 1" fp-title="Phigros"></a></p>
+<p align="center"><a href="phone.html">
+<img border="0" id="img3" src="button9.gif" height="40" width="200" alt="云手机" onmouseover="FP_swapImg(1,0,/*id*/'img3',/*url*/'buttonA.gif')" onmouseout="FP_swapImg(0,0,/*id*/'img3',/*url*/'button9.gif')" onmousedown="FP_swapImg(1,0,/*id*/'img3',/*url*/'buttonB.gif')" onmouseup="FP_swapImg(0,0,/*id*/'img3',/*url*/'buttonA.gif')" fp-style="fp-btn: Metal Rectangle 1; fp-font: SimSun-ExtB; fp-transparent: 1" fp-title="云手机"></a></p>
+<p align="center"><a href="mb8/1.html">
+<img border="0" id="img4" src="buttonC.gif" height="40" width="200" alt="小米手环8发布会视频" onmouseover="FP_swapImg(1,0,/*id*/'img4',/*url*/'buttonD.gif')" onmouseout="FP_swapImg(0,0,/*id*/'img4',/*url*/'buttonC.gif')" onmousedown="FP_swapImg(1,0,/*id*/'img4',/*url*/'buttonE.gif')" onmouseup="FP_swapImg(0,0,/*id*/'img4',/*url*/'buttonD.gif')" fp-style="fp-btn: Metal Rectangle 1; fp-font: SimSun-ExtB; fp-transparent: 1" fp-title="小米手环8发布会视频"></a></p>
+<p align="center"><a href="share/1.html">
+<img border="0" id="img5" src="buttonF.gif" height="40" width="200" alt="文件传输——发送" onmouseover="FP_swapImg(1,0,/*id*/'img5',/*url*/'button10.gif')" onmouseout="FP_swapImg(0,0,/*id*/'img5',/*url*/'buttonF.gif')" onmousedown="FP_swapImg(1,0,/*id*/'img5',/*url*/'button11.gif')" onmouseup="FP_swapImg(0,0,/*id*/'img5',/*url*/'button10.gif')" fp-style="fp-btn: Metal Rectangle 1; fp-font: SimSun-ExtB; fp-transparent: 1" fp-title="文件传输——发送"></a></p>
+<p align="center"><a href="share/2.html">
+<img border="0" id="img6" src="button12.gif" height="40" width="200" alt="文件传输——接收" onmouseover="FP_swapImg(1,0,/*id*/'img6',/*url*/'button13.gif')" onmouseout="FP_swapImg(0,0,/*id*/'img6',/*url*/'button12.gif')" onmousedown="FP_swapImg(1,0,/*id*/'img6',/*url*/'button14.gif')" onmouseup="FP_swapImg(0,0,/*id*/'img6',/*url*/'button13.gif')" fp-style="fp-btn: Metal Rectangle 1; fp-font: SimSun-ExtB; fp-transparent: 1" fp-title="文件传输——接收"></a></p>
+<p align="center"><a href="index1.html">
+<img border="0" id="img7" src="button16.gif" height="40" width="200" alt="LXJBOOK小说网" onmouseover="FP_swapImg(1,0,/*id*/'img7',/*url*/'button17.gif')" onmouseout="FP_swapImg(0,0,/*id*/'img7',/*url*/'button16.gif')" onmousedown="FP_swapImg(1,0,/*id*/'img7',/*url*/'button18.gif')" onmouseup="FP_swapImg(0,0,/*id*/'img7',/*url*/'button17.gif')" fp-style="fp-btn: Metal Rectangle 1; fp-font: SimSun-ExtB; fp-transparent: 1" fp-title="LXJBOOK小说网"></a></p>
+<p align="center"><a href="dlam/index.html">
+<img border="0" id="img8" src="button1D.jpg" height="40" width="200" alt="哆啦A梦幻之版相关网页" onmouseover="FP_swapImg(1,0,/*id*/'img8',/*url*/'button1E.jpg')" onmouseout="FP_swapImg(0,0,/*id*/'img8',/*url*/'button1D.jpg')" onmousedown="FP_swapImg(1,0,/*id*/'img8',/*url*/'button1F.jpg')" onmouseup="FP_swapImg(0,0,/*id*/'img8',/*url*/'button1E.jpg')" fp-style="fp-btn: Metal Rectangle 1; fp-font: SimSun-ExtB" fp-title="哆啦A梦幻之版相关网页"></a></p>
+
+</body>
+
+</html>
