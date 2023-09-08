@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<!-- saved from url=(0014)about:internet -->
+<head>
+  <title>打开链接</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f2f2f2;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+
+    .container {
+      max-width: 400px;
+      margin: 0 auto;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .input-group {
+      display: flex;
+      margin-bottom: 20px;
+    }
+
+    .input-group input {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .input-group button {
+      padding: 10px 20px;
+      margin-left: 10px;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .input-group button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>打开链接</h1>
+
+    <div class="input-group">
+      <input type="text" id="linkInput" placeholder="请输入链接">
+      <button onclick="openLink()">打开</button>
+    </div>
+
+    <script>
+      function openLink() {
+        var link = document.getElementById("linkInput").value;
+        
+        if (!link.startsWith("http://") && !link.startsWith("https://")) {
+          link = "http://" + link;
+        }
+        
+        window.open(link, "_blank");
+      }
+    </script>
+  </div>
+</body>
+</html>
