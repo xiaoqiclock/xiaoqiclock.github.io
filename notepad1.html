@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>记事本</title>
+</head>
+<body>
+  <textarea id="note" rows="10" cols="30"></textarea><br>
+  <button onclick="saveNote()">保存</button>
+  <button onclick="loadNote()">加载</button>
+
+  <script>
+    function saveNote() {
+      var note = document.getElementById("note").value;
+      document.cookie = "note=" + encodeURIComponent(note);
+      alert("记事本已保存！");
+    }
+
+    function loadNote() {
+      var encodedNote = getCookie("note");
+      if (encodedNote !== "") {
+        var note = decodeURIComponent(encodedNote);
+        document.getElementById("note").value = note;
+        alert("记事本已加载！");
+      } else {
+        alert("记事本为空！");
+      }
+    }
+
+    function getCookie(name) {
+      var cookieName = name + "=";
+      var cookies = document.cookie.split(';');
+      for (var i = 0; i < cookies.length; i++) {
+        var cookie = cookies[i].trim();
+        if (cookie.indexOf(cookieName) === 0) {
+          return cookie.substring(cookieName.length, cookie.length);
+        }
+      }
+      return "";
+    }
+  </script>
+</body>
+</html>
