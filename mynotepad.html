@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>记事本</title>
+  <style>
+    body, html {
+      height: 100%;
+      margin: 0;
+    }
+@media (max-width: 480px) {
+  #note {
+    font-size: 5vw;
+  }
+}
+    #note {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      resize: none;
+      border: none;
+      outline: none;
+    }
+  </style>
+</head>
+<body>
+  <textarea id="note"></textarea><br>
+
+  <script>
+    // JavaScript代码保持不变
+    window.onload = function() {
+      loadNote();
+      setInterval(saveNote, 1000);
+    };
+
+    function saveNote() {
+      var note = document.getElementById("note").value;
+      document.cookie = "note=" + encodeURIComponent(note);
+    }
+
+    function loadNote() {
+      var encodedNote = getCookie("note");
+      if (encodedNote !== "") {
+        var note = decodeURIComponent(encodedNote);
+        document.getElementById("note").value = note;
+      }
+    }
+
+    function getCookie(name) {
+      var cookieName = name + "=";
+      var cookies = document.cookie.split(';');
+      for (var i = 0; i < cookies.length; i++) {
+        var cookie = cookies[i].trim();
+        if (cookie.indexOf(cookieName) === 0) {
+          return cookie.substring(cookieName.length, cookie.length);
+        }
+      }
+      return "";
+    }
+  </script>
+</body>
+</html>
