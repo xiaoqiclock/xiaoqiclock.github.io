@@ -1,0 +1,4 @@
+RewriteEngine on
+RewriteRule ^ys1$ https://www.migufun.com/middleh5/gamedetail/400007864 [L,R=301]
+RewriteRule ^ys2$ https://www.migufun.com/middleh5/gamedetail/650762775 [L,R=301]
+RewriteRule ^ys3$ https://ys.mihoyo.com/cloud/ [L,R=301]
