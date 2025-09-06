@@ -25,7 +25,7 @@ def generate_index(directory):
             continue
             
         # 获取修改时间
-        mtime = datetime.fromtimestamp(item.stat()。st_mtime)
+        mtime = datetime.fromtimestamp(item.stat().st_mtime)
         date_str = mtime.strftime("%d-%b-%Y %H:%M")
         
         # 确定是文件还是目录
