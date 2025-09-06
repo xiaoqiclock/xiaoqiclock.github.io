@@ -1,0 +1,50 @@
+name: Update Directory Index
+
+# 触发条件：当代码被推送到 main 分支时
+on:
+  push:
+    branches: [ "main" ]
+  # 你也可以手动触发这个工作流
+  workflow_dispatch:
+
+# 设置权限，允许写入仓库
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 步骤 1: 获取仓库代码
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # 获取所有历史提交，这样后续提交步骤才能正常工作
+          fetch-depth: 0
+
+      # 步骤 2: 设置 Python 环境
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      # 步骤 3: 运行我们刚才写的 Python 脚本
+      # 这里假设你要为根目录生成索引页
+      # 如果你想为其他目录生成，例如 'public'，则改为 `python .github/scripts/generate_index.py public`
+      - name: Generate index.html
+        run: python .github/scripts/generate_index.py
+
+      # 步骤 4: 检查是否有文件变更，如果有则提交
+      - name: Commit and Push if changed
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add -A
+          git diff --staged --quiet || (git commit -m "Auto-generated index.html by GitHub Actions" && git push)
+        env:
+          # 使用之前设置的 PAT_TOKEN 密钥来进行推送认证
+          REPO_TOKEN: ${{ secrets.PAT_TOKEN }}
+        # 注意：这里通过 https 方式推送，使用 PAT 作为密码
+        # 修改远程仓库的 URL 以包含令牌
+        continue-on-error: true
