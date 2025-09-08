@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M3U8视频播放器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+        
+        .description {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .player-container {
+            background: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+        
+        #video-player {
+            width: 100%;
+            display: block;
+            background: #000;
+        }
+        
+        .controls {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .url-input {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        
+        button {
+            padding: 12px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #2980b9;
+        }
+        
+        .instructions {
+            background: #fff;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .instructions h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.8rem;
+        }
+        
+        .instructions p {
+            margin-bottom: 15px;
+        }
+        
+        .instructions ul {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        
+        .note {
+            background: #fff8e1;
+            padding: 15px;
+            border-left: 4px solid #ffc107;
+            margin-top: 20px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 600px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>M3U8视频播放器</h1>
+            <p class="description">一个简单的在线播放器，用于播放M3U8格式的视频流</p>
+        </header>
+        
+        <div class="player-container">
+            <video id="video-player" controls></video>
+            <div class="controls">
+                <div class="url-input">
+                    <input type="text" id="m3u8-url" placeholder="https://xiaoqiclock.github.io/videos/1/1.m3u8." value="https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8">
+                </div>
+                <button id="play-btn">播放</button>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h2>使用说明</h2>
+            <p>M3U8是HTTP Live Streaming (HLS) 协议使用的播放列表格式，常用于视频流媒体传输。</p>
+            
+            <ul>
+                <li>在上方输入框中输入M3U8视频流地址</li>
+                <li>点击"播放"按钮开始播放视频</li>
+                <li>使用视频控件进行播放、暂停、音量调节等操作</li>
+            </ul>
+            
+            <p>您可以使用默认的示例流进行测试，或输入您自己的M3U8地址。</p>
+            
+            <div class="note">
+                <strong>注意：</strong> 由于浏览器安全策略，某些M3U8流可能无法播放（CORS问题）。如果遇到播放问题，请确保流服务器已正确配置CORS头。
+            </div>
+        </div>
+        
+        <footer>
+            <p>© 2023 M3U8播放器 | 使用HLS.js技术</p>
+        </footer>
+    </div>
+
+    <!-- 引入hls.js库 -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const video = document.getElementById('video-player');
+            const urlInput = document.getElementById('m3u8-url');
+            const playBtn = document.getElementById('play-btn');
+            
+            // 检查浏览器是否原生支持HLS
+            function checkNativeSupport() {
+                const video = document.createElement('video');
+                return video.canPlayType('application/vnd.apple.mpegurl') !== '';
+            }
+            
+            // 播放M3U8流
+            function playM3u8(url) {
+                if (!url) {
+                    alert('请输入M3U8视频流地址');
+                    return;
+                }
+                
+                if (Hls.isSupported()) {
+                    const hls = new Hls();
+                    hls.loadSource(url);
+                    hls.attachMedia(video);
+                    hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                        video.play().catch(e => {
+                            console.error('播放错误:', e);
+                            alert('自动播放失败，请手动点击播放');
+                        });
+                    });
+                } else if (checkNativeSupport()) {
+                    video.src = url;
+                    video.play().catch(e => {
+                        console.error('播放错误:', e);
+                        alert('自动播放失败，请手动点击播放');
+                    });
+                } else {
+                    alert('您的浏览器不支持播放M3U8视频流');
+                }
+            }
+            
+            // 点击播放按钮
+            playBtn.addEventListener('click', function() {
+                playM3u8(urlInput.value);
+            });
+            
+            // 尝试自动播放示例流
+            setTimeout(() => {
+                playM3u8(urlInput.value);
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
