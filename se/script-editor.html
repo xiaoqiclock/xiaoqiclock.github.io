@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>剧本可视化编辑器</title>
+  <script src="https://xiaoqiclock.eu.org/se/3.4.17"></script>
+  <link href="https://xiaoqiclock.eu.org/se/font-awesome.min.css" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#165DFF',
+            secondary: '#36CFC9',
+            accent: '#722ED1',
+            neutral: '#F5F7FA',
+            dark: '#1D2129',
+            success: '#52C41A',
+            warning: '#FAAD14',
+          },
+        },
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .editor-shadow {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      }
+      .floating-btn {
+        transition: all 0.2s ease;
+      }
+      .floating-btn:hover {
+        transform: translateY(-2px);
+      }
+      .shortcut-hint {
+        @apply text-xs bg-gray-100 px-2 py-0.5 rounded ml-2 text-gray-500;
+      }
+      .scene-type-badge {
+        @apply text-xs px-2 py-0.5 rounded-full text-white text-center;
+      }
+      .file-input-label {
+        @apply cursor-pointer relative overflow-hidden rounded-md bg-primary px-4 py-2 text-white focus-within:outline-none hover:bg-primary/90 transition-all flex items-center;
+      }
+      .file-input-label input {
+        @apply absolute right-0 top-0 min-h-full min-w-full opacity-0;
+      }
+      .modal-backdrop {
+        @apply fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center p-4;
+      }
+      .modal-content {
+        @apply bg-white rounded-lg shadow-xl max-w-md w-full max-h-[80vh] overflow-y-auto;
+      }
+    }
+  </style>
+</head>
+<body class="font-sans bg-gray-50 text-dark h-screen flex flex-col overflow-hidden">
+  <!-- 顶部导航栏 -->
+  <header class="bg-white border-b border-gray-200 shadow-sm px-6 py-3 flex items-center justify-between z-10">
+    <div class="flex items-center space-x-4">
+      <h1 class="text-xl font-bold text-primary flex items-center">
+        <i class="fa fa-television mr-2"></i>
+        剧本可视化编辑器
+      </h1>
+    </div>
+    <div class="flex items-center space-x-3">
+      <button id="addCharacterBtn" class="px-4 py-2 bg-warning text-white rounded-md hover:bg-warning/90 transition-all flex items-center">
+        <i class="fa fa-user-plus mr-2"></i>添加角色
+      </button>
+      <button id="addExpressionBtn" class="px-4 py-2 bg-accent text-white rounded-md hover:bg-accent/90 transition-all flex items-center">
+        <i class="fa fa-smile-o mr-2"></i>添加表情
+      </button>
+      <label class="file-input-label" for="importFile">
+        <i class="fa fa-upload mr-2"></i>导入JSON
+        <input id="importFile" type="file" accept=".json, .txt" class="sr-only">
+      </label>
+      <button id="newBtn" class="px-4 py-2 bg-secondary text-white rounded-md hover:bg-secondary/90 transition-all flex items-center">
+        <i class="fa fa-file-o mr-2"></i>新建
+      </button>
+      <button id="exportBtn" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-all flex items-center">
+        <i class="fa fa-download mr-2"></i>导出JSON
+      </button>
+    </div>
+  </header>
+
+  <!-- 主内容区 -->
+  <main class="flex flex-1 overflow-hidden">
+    <!-- 左侧场景列表 -->
+    <div class="w-64 bg-white border-r border-gray-200 flex flex-col overflow-hidden">
+      <div class="p-4 border-b border-gray-200">
+        <h2 class="font-semibold text-gray-700">场景列表</h2>
+        <button id="addSceneBtn" class="mt-2 w-full py-2 bg-primary/10 text-primary rounded-md hover:bg-primary/20 transition-all text-sm flex items-center justify-center">
+          <i class="fa fa-plus mr-1"></i> 添加场景
+        </button>
+      </div>
+      <div id="sceneList" class="flex-1 overflow-y-auto p-2 space-y-2">
+        <!-- 场景列表将通过JS动态生成 -->
+      </div>
+    </div>
+
+    <!-- 中间编辑区 -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <div id="sceneEditor" class="flex-1 overflow-y-auto p-6 bg-neutral relative">
+        <!-- 浮动添加按钮 - 始终可见 -->
+        <button id="floatingAddBtn" class="floating-btn fixed bottom-6 right-6 bg-secondary text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg z-10">
+          <i class="fa fa-plus text-lg"></i>
+        </button>
+        
+        <!-- 场景编辑器将通过JS动态生成 -->
+        <div class="text-center text-gray-500 py-10">
+          <i class="fa fa-film text-4xl mb-3 opacity-30"></i>
+          <p>请选择一个场景进行编辑</p>
+          <p class="text-sm mt-2 text-gray-400">快捷键: Ctrl+Enter 添加新对话</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右侧预览区 -->
+    <div class="w-80 bg-white border-l border-gray-200 flex flex-col overflow-hidden hidden md:flex">
+      <div class="p-4 border-b border-gray-200">
+        <h2 class="font-semibold text-gray-700">实时预览</h2>
+      </div>
+      <div id="previewArea" class="flex-1 overflow-y-auto p-2">
+        <!-- 预览内容将通过JS动态生成 -->
+        <div class="text-center text-gray-500 py-10">
+          <i class="fa fa-eye text-4xl mb-3 opacity-30"></i>
+          <p>选择场景后显示预览</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 添加角色模态框 -->
+  <div id="characterModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content">
+      <div class="p-5 border-b border-gray-200">
+        <h3 class="text-lg font-semibold">管理角色</h3>
+      </div>
+      <div class="p-5">
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-1">角色名称</label>
+          <input type="text" id="newCharacterName" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-warning/50 focus:border-warning" placeholder="输入角色名称">
+        </div>
+        <button id="saveCharacterBtn" class="w-full py-2 bg-warning text-white rounded-md hover:bg-warning/90 transition-all">
+          添加角色
+        </button>
+        
+        <div class="mt-6">
+          <h4 class="font-medium mb-3">已添加角色</h4>
+          <div id="charactersList" class="space-y-2 max-h-40 overflow-y-auto">
+            <!-- 角色列表将动态生成 -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 添加表情模态框 -->
+  <div id="expressionModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content">
+      <div class="p-5 border-b border-gray-200">
+        <h3 class="text-lg font-semibold">管理表情/姿态</h3>
+      </div>
+      <div class="p-5">
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-1">表情/姿态代码</label>
+          <input type="text" id="newExpressionCode" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent" placeholder="例如: large_karuha_02face">
+        </div>
+        <button id="saveExpressionBtn" class="w-full py-2 bg-accent text-white rounded-md hover:bg-accent/90 transition-all">
+          添加表情
+        </button>
+        
+        <div class="mt-6">
+          <h4 class="font-medium mb-3">已添加表情</h4>
+          <div id="expressionsList" class="space-y-2 max-h-40 overflow-y-auto">
+            <!-- 表情列表将动态生成 -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 从本地存储加载角色和表情数据
+    let characters = JSON.parse(localStorage.getItem('scriptEditorCharacters')) || [
+      "主角", "配角A"
+    ];
+    
+    let expressions = JSON.parse(localStorage.getItem('scriptEditorExpressions')) || [
+      "large_karuha_02face", "none"
+    ];
+    
+    // 初始化剧本数据
+    let scriptData = [
+      {
+        type: "dialogue", // 场景类型，dialogue/choice
+        background: "bg035c",
+        dialogues: [
+          {
+            character: "",
+            text: "我小跑过去。",
+            body: "large_karuha_02face"
+          }
+        ]
+      },
+      {
+        type: "choice",
+        background: "bg040c",
+        choices: [
+          {
+            text: "直接给她",
+            nextScene: 1
+          },
+          {
+            text: "晃晃再给她",
+            nextScene: 2
+          }
+        ]
+      },
+      {
+        type: "dialogue",
+        background: "bg_white",
+        dialogues: [
+          {
+            character: "",
+            text: "end",
+            END: "FIN"
+          }
+        ]
+      }
+    ];
+    
+    let currentSceneIndex = 0;
+    
+    // DOM元素
+    const sceneListEl = document.getElementById('sceneList');
+    const sceneEditorEl = document.getElementById('sceneEditor');
+    const previewAreaEl = document.getElementById('previewArea');
+    const addSceneBtn = document.getElementById('addSceneBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    const newBtn = document.getElementById('newBtn');
+    const floatingAddBtn = document.getElementById('floatingAddBtn');
+    const importFileInput = document.getElementById('importFile');
+    const addCharacterBtn = document.getElementById('addCharacterBtn');
+    const addExpressionBtn = document.getElementById('addExpressionBtn');
+    const characterModal = document.getElementById('characterModal');
+    const expressionModal = document.getElementById('expressionModal');
+    const saveCharacterBtn = document.getElementById('saveCharacterBtn');
+    const saveExpressionBtn = document.getElementById('saveExpressionBtn');
+    const newCharacterName = document.getElementById('newCharacterName');
+    const newExpressionCode = document.getElementById('newExpressionCode');
+    const charactersList = document.getElementById('charactersList');
+    const expressionsList = document.getElementById('expressionsList');
+    
+    // 初始化
+    function init() {
+      renderSceneList();
+      renderCharactersList();
+      renderExpressionsList();
+      
+      if (scriptData.length > 0) {
+        selectScene(0);
+      }
+      
+      // 事件监听
+      addSceneBtn.addEventListener('click', addScene);
+      exportBtn.addEventListener('click', exportJSON);
+      newBtn.addEventListener('click', createNewScript);
+      floatingAddBtn.addEventListener('click', addDialogueOrChoice);
+      importFileInput.addEventListener('change', handleFileImport);
+      
+      // 角色和表情管理事件
+      addCharacterBtn.addEventListener('click', () => characterModal.style.removeProperty('display'));
+      addExpressionBtn.addEventListener('click', () => expressionModal.style.removeProperty('display'));
+      saveCharacterBtn.addEventListener('click', addCharacter);
+      saveExpressionBtn.addEventListener('click', addExpression);
+      
+      // 点击模态框背景关闭
+      characterModal.addEventListener('click', (e) => {
+        if (e.target === characterModal) characterModal.style.display = 'none';
+      });
+      
+      expressionModal.addEventListener('click', (e) => {
+        if (e.target === expressionModal) expressionModal.style.display = 'none';
+      });
+      
+      // 快捷键监听
+      document.addEventListener('keydown', handleKeyboardShortcuts);
+      
+      // 按ESC键关闭模态框
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          characterModal.style.display = 'none';
+          expressionModal.style.display = 'none';
+        }
+      });
+    }
+    
+    // 处理键盘快捷键
+    function handleKeyboardShortcuts(e) {
+      // 检查是否有场景被选中
+      if (scriptData.length === 0) return;
+      
+      // Ctrl+Enter 或 Cmd+Enter 添加新对话（仅对对话场景有效）
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && 
+          scriptData[currentSceneIndex].type === 'dialogue') {
+        e.preventDefault();
+        addDialogue();
+      }
+    }
+    
+    // 渲染角色列表
+    function renderCharactersList() {
+      charactersList.innerHTML = '';
+      
+      if (characters.length === 0) {
+        charactersList.innerHTML = '<div class="text-sm text-gray-500 italic">暂无角色，请添加</div>';
+        return;
+      }
+      
+      characters.forEach((character, index) => {
+        const characterEl = document.createElement('div');
+        characterEl.className = 'flex justify-between items-center p-2 bg-gray-50 rounded-md';
+        characterEl.innerHTML = `
+          <span>${character}</span>
+          <button class="delete-character text-gray-400 hover:text-red-500 p-1" data-index="${index}">
+            <i class="fa fa-trash-o"></i>
+          </button>
+        `;
+        
+        charactersList.appendChild(characterEl);
+      });
+      
+      // 添加删除角色事件
+      document.querySelectorAll('.delete-character').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const index = parseInt(e.currentTarget.getAttribute('data-index'));
+          deleteCharacter(index);
+        });
+      });
+    }
+    
+    // 渲染表情列表
+    function renderExpressionsList() {
+      expressionsList.innerHTML = '';
+      
+      if (expressions.length === 0) {
+        expressionsList.innerHTML = '<div class="text-sm text-gray-500 italic">暂无表情，请添加</div>';
+        return;
+      }
+      
+      expressions.forEach((expression, index) => {
+        const expressionEl = document.createElement('div');
+        expressionEl.className = 'flex justify-between items-center p-2 bg-gray-50 rounded-md';
+        expressionEl.innerHTML = `
+          <span>${expression}</span>
+          <button class="delete-expression text-gray-400 hover:text-red-500 p-1" data-index="${index}">
+            <i class="fa fa-trash-o"></i>
+          </button>
+        `;
+        
+        expressionsList.appendChild(expressionEl);
+      });
+      
+      // 添加删除表情事件
+      document.querySelectorAll('.delete-expression').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const index = parseInt(e.currentTarget.getAttribute('data-index'));
+          deleteExpression(index);
+        });
+      });
+    }
+    
+    // 添加角色
+    function addCharacter() {
+      const name = newCharacterName.value.trim();
+      
+      if (!name) {
+        showToast('请输入角色名称', 'error');
+        return;
+      }
+      
+      if (characters.includes(name)) {
+        showToast('该角色已存在', 'error');
+        return;
+      }
+      
+      characters.push(name);
+      saveCharacters();
+      renderCharactersList();
+      newCharacterName.value = '';
+      
+      // 如果有打开的编辑器，重新渲染以更新角色选择列表
+      if (scriptData.length > 0) {
+        renderSceneEditor();
+      }
+      
+      showToast(`已添加角色: ${name}`);
+    }
+    
+    // 添加表情
+    function addExpression() {
+      const code = newExpressionCode.value.trim();
+      
+      if (!code) {
+        showToast('请输入表情代码', 'error');
+        return;
+      }
+      
+      if (expressions.includes(code)) {
+        showToast('该表情已存在', 'error');
+        return;
+      }
+      
+      expressions.push(code);
+      saveExpressions();
+      renderExpressionsList();
+      newExpressionCode.value = '';
+      
+      // 如果有打开的编辑器，重新渲染以更新表情选择列表
+      if (scriptData.length > 0) {
+        renderSceneEditor();
+      }
+      
+      showToast(`已添加表情: ${code}`);
+    }
+    
+    // 删除角色
+    function deleteCharacter(index) {
+      const character = characters[index];
+      
+      if (confirm(`确定要删除角色"${character}"吗？`)) {
+        characters.splice(index, 1);
+        saveCharacters();
+        renderCharactersList();
+        
+        // 更新所有使用该角色的对话
+        scriptData.forEach(scene => {
+          if (scene.type === 'dialogue' && scene.dialogues) {
+            scene.dialogues.forEach(dialogue => {
+              if (dialogue.character === character) {
+                dialogue.character = '';
+              }
+            });
+          }
+        });
+        
+        // 重新渲染编辑器
+        if (scriptData.length > 0) {
+          renderSceneEditor();
+          renderPreview();
+        }
+        
+        showToast(`已删除角色: ${character}`);
+      }
+    }
+    
+    // 删除表情
+    function deleteExpression(index) {
+      const expression = expressions[index];
+      
+      if (confirm(`确定要删除表情"${expression}"吗？`)) {
+        expressions.splice(index, 1);
+        saveExpressions();
+        renderExpressionsList();
+        
+        // 更新所有使用该表情的对话
+        scriptData.forEach(scene => {
+          if (scene.type === 'dialogue' && scene.dialogues) {
+            scene.dialogues.forEach(dialogue => {
+              if (dialogue.body === expression) {
+                dialogue.body = expressions.length > 0 ? expressions[0] : 'none';
+              }
+            });
+          }
+        });
+        
+        // 重新渲染编辑器
+        if (scriptData.length > 0) {
+          renderSceneEditor();
+          renderPreview();
+        }
+        
+        showToast(`已删除表情: ${expression}`);
+      }
+    }
+    
+    // 保存角色到本地存储
+    function saveCharacters() {
+      localStorage.setItem('scriptEditorCharacters', JSON.stringify(characters));
+    }
+    
+    // 保存表情到本地存储
+    function saveExpressions() {
+      localStorage.setItem('scriptEditorExpressions', JSON.stringify(expressions));
+    }
+    
+    // 处理文件导入
+    function handleFileImport(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      // 验证文件类型
+      if (!file.name.endsWith('.json') && !file.name.endsWith('.txt')) {
+        showToast('请导入JSON或TXT格式的文件', 'error');
+        importFileInput.value = ''; // 重置输入，允许重新选择同一文件
+        return;
+      }
+      
+      const reader = new FileReader();
+      
+      reader.onload = function(event) {
+        try {
+          const importedData = JSON.parse(event.target.result);
+          
+          // 验证导入的数据格式
+          if (!Array.isArray(importedData)) {
+            throw new Error('导入的数据格式不正确，应为数组');
+          }
+          
+          // 处理导入的数据，添加类型信息
+          const processedData = importedData.map(scene => {
+            // 判断场景类型
+            let type = 'dialogue';
+            if (scene.choices && Array.isArray(scene.choices)) {
+              type = 'choice';
+            }
+            
+            // 为对话场景添加默认body
+            if (type === 'dialogue' && scene.dialogues) {
+              scene.dialogues = scene.dialogues.map(dialogue => {
+                // 如果没有body，默认为none
+                if (dialogue.body === undefined) {
+                  dialogue.body = 'none';
+                }
+                return dialogue;
+              });
+            }
+            
+            return {
+              type,
+              ...scene
+            };
+          });
+          
+          // 确认覆盖当前数据
+          if (confirm('确定要导入此文件吗？当前编辑的内容将被替换。')) {
+            scriptData = processedData;
+            currentSceneIndex = 0;
+            selectScene(0);
+            showToast(`成功导入 ${scriptData.length} 个场景`);
+          }
+        } catch (error) {
+          console.error('导入失败:', error);
+          showToast(`导入失败: ${error.message}`, 'error');
+        }
+      };
+      
+      reader.onerror = function() {
+        showToast('文件读取失败，请重试', 'error');
+      };
+      
+      reader.readAsText(file);
+      
+      // 重置输入，允许重新选择同一文件
+      importFileInput.value = '';
+    }
+    
+    // 渲染场景列表
+    function renderSceneList() {
+      sceneListEl.innerHTML = '';
+      
+      scriptData.forEach((scene, index) => {
+        // 场景类型标签
+        let typeBadge = '';
+        if (scene.type === 'choice') {
+          typeBadge = '<span class="scene-type-badge bg-accent">选项</span>';
+        } else if (scene.dialogues && scene.dialogues.some(d => d.END)) {
+          typeBadge = '<span class="scene-type-badge bg-success">结局</span>';
+        } else if (scene.dialogues && scene.dialogues.some(d => d.toScenes)) {
+          typeBadge = '<span class="scene-type-badge bg-warning">跳转</span>';
+        }
+        
+        const sceneItem = document.createElement('div');
+        sceneItem.className = `p-3 rounded-md cursor-pointer transition-all ${
+          index === currentSceneIndex ? 'bg-primary/10 border-l-4 border-primary' : 'hover:bg-gray-100'
+        }`;
+        sceneItem.innerHTML = `
+          <div class="flex justify-between items-start">
+            <div>
+              <div class="font-medium text-sm flex items-center">
+                场景 ${index + 1}
+                ${typeBadge}
+              </div>
+              <div class="text-xs text-gray-500 truncate">${scene.background}</div>
+            </div>
+            <div class="flex space-x-1">
+              <button class="delete-scene text-gray-400 hover:text-red-500 p-1" data-index="${index}">
+                <i class="fa fa-trash-o"></i>
+              </button>
+            </div>
+          </div>
+        `;
+        
+        sceneItem.addEventListener('click', (e) => {
+          if (!e.target.closest('.delete-scene')) {
+            selectScene(index);
+          }
+        });
+        
+        sceneListEl.appendChild(sceneItem);
+      });
+      
+      // 添加删除场景事件监听
+      document.querySelectorAll('.delete-scene').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const index = parseInt(btn.getAttribute('data-index'));
+          deleteScene(index);
+        });
+      });
+    }
+    
+    // 选择场景
+    function selectScene(index) {
+      currentSceneIndex = index;
+      renderSceneEditor();
+      renderPreview();
+      renderSceneList();
+      
+      // 根据场景类型和是否有场景显示/隐藏浮动按钮
+      floatingAddBtn.style.display = 
+        scriptData.length > 0 && scriptData[currentSceneIndex].type === 'dialogue' ? 'flex' : 'none';
+    }
+    
+    // 渲染场景编辑器
+    function renderSceneEditor() {
+      const scene = scriptData[currentSceneIndex];
+      
+      // 场景类型选择器
+      const sceneTypeSelector = `
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-gray-700 mb-2">场景类型</label>
+          <div class="flex space-x-4">
+            <label class="inline-flex items-center">
+              <input type="radio" name="sceneType" value="dialogue" ${scene.type === 'dialogue' ? 'checked' : ''} 
+                     class="form-radio text-primary focus:ring-primary">
+              <span class="ml-2">对话场景</span>
+            </label>
+            <label class="inline-flex items-center">
+              <input type="radio" name="sceneType" value="choice" ${scene.type === 'choice' ? 'checked' : ''}
+                     class="form-radio text-primary focus:ring-primary">
+              <span class="ml-2">选项场景</span>
+            </label>
+          </div>
+        </div>
+      `;
+      
+      // 背景设置
+      const backgroundSettings = `
+        <div class="bg-white rounded-lg p-5 editor-shadow mb-6">
+          <h3 class="text-lg font-semibold mb-4">场景 ${currentSceneIndex + 1} 设置</h3>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">背景</label>
+            <input type="text" id="backgroundInput" value="${scene.background}" 
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
+          </div>
+          <button id="updateBackgroundBtn" class="px-3 py-1 bg-primary text-white rounded text-sm hover:bg-primary/90 transition-all">
+            更新背景
+          </button>
+        </div>
+      `;
+      
+      // 根据场景类型渲染不同内容
+      let sceneContent = '';
+      
+      if (scene.type === 'dialogue') {
+        // 生成角色选择下拉框选项
+        const characterOptions = `
+          <option value="">(无角色/叙述)</option>
+          ${characters.map(character => `<option value="${character}">${character}</option>`).join('')}
+        `;
+        
+        // 生成表情选择下拉框选项
+        const expressionOptions = expressions.map(expr => 
+          `<option value="${expr}">${expr}</option>`
+        ).join('');
+        
+        // 对话场景编辑器
+        sceneContent = `
+          <div class="bg-white rounded-lg p-5 editor-shadow">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg font-semibold">对话列表</h3>
+              <button id="addDialogueTopBtn" class="px-3 py-1 bg-secondary text-white rounded text-sm hover:bg-secondary/90 transition-all flex items-center">
+                <i class="fa fa-plus mr-1"></i> 添加对话
+                <span class="shortcut-hint">Ctrl+Enter</span>
+              </button>
+            </div>
+            
+            <div id="dialoguesContainer" class="space-y-4">
+              ${scene.dialogues.map((dialogue, idx) => `
+                <div class="border border-gray-200 rounded-md p-4 hover:border-primary/30 transition-all">
+                  <div class="flex justify-between items-start mb-3">
+                    <div class="font-medium text-sm">对话 ${idx + 1}</div>
+                    <div class="flex space-x-1">
+                      <button class="move-up-dialogue text-gray-400 hover:text-primary p-1" data-idx="${idx}">
+                        <i class="fa fa-arrow-up"></i>
+                      </button>
+                      <button class="move-down-dialogue text-gray-400 hover:text-primary p-1" data-idx="${idx}">
+                        <i class="fa fa-arrow-down"></i>
+                      </button>
+                      <button class="delete-dialogue text-gray-400 hover:text-red-500 p-1" data-idx="${idx}">
+                        <i class="fa fa-trash-o"></i>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div class="mb-3">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">角色</label>
+                    <select class="character-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary" 
+                            data-idx="${idx}">
+                      ${characterOptions}
+                    </select>
+                  </div>
+                  
+                  <div class="mb-3">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">表情/姿态</label>
+                    <select class="body-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary" 
+                            data-idx="${idx}">
+                      ${expressionOptions}
+                    </select>
+                  </div>
+                  
+                  <div class="mb-3">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">对话内容</label>
+                    <textarea class="text-input w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary" 
+                              rows="3" data-idx="${idx}">${dialogue.text || ''}</textarea>
+                  </div>
+                  
+                  <div class="grid grid-cols-2 gap-3 mb-3">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">跳转场景 (当前+x)</label>
+                      <input type="number" class="to-scenes-input w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary" 
+                             value="${dialogue.toScenes || ''}" placeholder="留空不跳转" data-idx="${idx}">
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">结局设置</label>
+                      <select class="end-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary" 
+                              data-idx="${idx}">
+                        <option value="">无</option>
+                        <option value="FIN" ${dialogue.END === 'FIN' ? 'selected' : ''}>FIN (结局)</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div class="flex justify-between">
+                    <button class="add-after-dialogue-btn px-3 py-1 bg-secondary/80 text-white rounded text-sm hover:bg-secondary transition-all" 
+                            data-idx="${idx}">
+                      <i class="fa fa-plus mr-1"></i> 在下方添加
+                    </button>
+                    <button class="update-dialogue-btn px-3 py-1 bg-primary/80 text-white rounded text-sm hover:bg-primary transition-all" 
+                            data-idx="${idx}">
+                      保存修改
+                    </button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+            
+            <!-- 列表底部添加按钮 -->
+            <div class="mt-6 text-center">
+              <button id="addDialogueBottomBtn" class="px-4 py-2 bg-secondary text-white rounded-md hover:bg-secondary/90 transition-all inline-flex items-center">
+                <i class="fa fa-plus mr-2"></i> 添加新对话
+                <span class="shortcut-hint">Ctrl+Enter</span>
+              </button>
+            </div>
+          </div>
+        `;
+      } else {
+        // 选项场景编辑器
+        sceneContent = `
+          <div class="bg-white rounded-lg p-5 editor-shadow">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg font-semibold">选项列表</h3>
+              <button id="addChoiceBtn" class="px-3 py-1 bg-accent text-white rounded text-sm hover:bg-accent/90 transition-all flex items-center">
+                <i class="fa fa-plus mr-1"></i> 添加选项
+              </button>
+            </div>
+            
+            <div id="choicesContainer" class="space-y-4">
+              ${scene.choices.map((choice, idx) => `
+                <div class="border border-gray-200 rounded-md p-4 hover:border-accent/30 transition-all">
+                  <div class="flex justify-between items-start mb-3">
+                    <div class="font-medium text-sm">选项 ${idx + 1}</div>
+                    <div class="flex space-x-1">
+                      <button class="move-up-choice text-gray-400 hover:text-accent p-1" data-idx="${idx}">
+                        <i class="fa fa-arrow-up"></i>
+                      </button>
+                      <button class="move-down-choice text-gray-400 hover:text-accent p-1" data-idx="${idx}">
+                        <i class="fa fa-arrow-down"></i>
+                      </button>
+                      <button class="delete-choice text-gray-400 hover:text-red-500 p-1" data-idx="${idx}">
+                        <i class="fa fa-trash-o"></i>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div class="mb-3">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">选项文本</label>
+                    <input type="text" class="choice-text-input w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent" 
+                           value="${choice.text || ''}" data-idx="${idx}">
+                  </div>
+                  
+                  <div class="mb-3">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">跳转场景 (当前+x)</label>
+                    <input type="number" class="choice-nextscene-input w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent" 
+                           value="${choice.nextScene || 1}" data-idx="${idx}">
+                    <p class="text-xs text-gray-500 mt-1">将跳转到场景 ${currentSceneIndex + 1} + 值 = 场景 ${currentSceneIndex + 1 + (choice.nextScene || 1)}</p>
+                  </div>
+                  
+                  <button class="update-choice-btn px-3 py-1 bg-accent/80 text-white rounded text-sm hover:bg-accent transition-all" 
+                          data-idx="${idx}">
+                    保存修改
+                  </button>
+                </div>
+              `).join('')}
+            </div>
+            
+            <!-- 列表底部添加按钮 -->
+            <div class="mt-6 text-center">
+              <button id="addChoiceBottomBtn" class="px-4 py-2 bg-accent text-white rounded-md hover:bg-accent/90 transition-all inline-flex items-center">
+                <i class="fa fa-plus mr-2"></i> 添加新选项
+              </button>
+            </div>
+          </div>
+        `;
+      }
+      
+      // 组合完整编辑器HTML
+      sceneEditorEl.innerHTML = `
+        <div class="max-w-3xl mx-auto">
+          ${sceneTypeSelector}
+          ${backgroundSettings}
+          ${sceneContent}
+        </div>
+      `;
+      
+      // 设置角色选择器的选中值
+      if (scene.type === 'dialogue') {
+        scene.dialogues.forEach((dialogue, idx) => {
+          const selectEl = document.querySelector(`.character-select[data-idx="${idx}"]`);
+          if (selectEl && dialogue.character) {
+            selectEl.value = dialogue.character;
+          }
+          
+          const bodySelectEl = document.querySelector(`.body-select[data-idx="${idx}"]`);
+          if (bodySelectEl && dialogue.body) {
+            bodySelectEl.value = dialogue.body;
+          }
+        });
+      }
+      
+      // 添加事件监听 - 场景类型切换
+      document.querySelectorAll('input[name="sceneType"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          changeSceneType(e.target.value);
+        });
+      });
+      
+      // 添加事件监听 - 背景更新
+      document.getElementById('updateBackgroundBtn').addEventListener('click', updateBackground);
+      
+      if (scene.type === 'dialogue') {
+        // 对话场景事件监听
+        document.getElementById('addDialogueTopBtn').addEventListener('click', addDialogue);
+        document.getElementById('addDialogueBottomBtn').addEventListener('click', addDialogue);
+        
+        // 对话操作事件
+        document.querySelectorAll('.update-dialogue-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const idx = parseInt(e.currentTarget.getAttribute('data-idx'));
+            updateDialogue(idx);
+          });
+        });
+        
+        document.querySelectorAll('.delete-dialogue').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const idx = parseInt(e.currentTarget.getAttribute('data-idx'));
+            deleteDialogue(idx);
+          });
+        });
+        
+        document.querySelectorAll('.move-up-dialogue').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const idx = parseInt(e.currentTarget.getAttribute('data-idx'));
+            moveDialogue(idx, -1);
+          });
+        });
+        
+        document.querySelectorAll('.move-down-dialogue').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const idx = parseInt(e.currentTarget.getAttribute('data-idx'));
+            moveDialogue(idx, 1);
+          });
+        });
+        
+        // "在下方添加"按钮事件
+        document.querySelectorAll('.add-after-dialogue-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const idx = parseInt(e.currentTarget.getAttribute('data-idx'));
+            addDialogueAfter(idx);
+          });
+        });
+      } else {
+        // 选项场景事件监听
+        document.getElementById('addChoiceBtn').addEventListener('click', addChoice);
+        document.getElementById('addChoiceBottomBtn').addEventListener('click', addChoice);
+        
+        // 选项操作事件
+        document.querySelectorAll('.update-choice-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const idx = parseInt(e.currentTarget.getAttribute('data-idx'));
+            updateChoice(idx);
+          });
+        });
+        
+        document.querySelectorAll('.delete-choice').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const idx = parseInt(e.currentTarget.getAttribute('data-idx'));
+            deleteChoice(idx);
+          });
+        });
+        
+        document.querySelectorAll('.move-up-choice').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const idx = parseInt(e.currentTarget.getAttribute('data-idx'));
+            moveChoice(idx, -1);
+          });
+        });
+        
+        document.querySelectorAll('.move-down-choice').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const idx = parseInt(e.currentTarget.getAttribute('data-idx'));
+            moveChoice(idx, 1);
+          });
+        });
+      }
+    }
+    
+    // 渲染预览
+    function renderPreview() {
+      const scene = scriptData[currentSceneIndex];
+      const sceneIndex = currentSceneIndex;
+      
+      // 背景预览
+      const backgroundPreview = `
+        <div class="bg-gray-100 rounded-lg overflow-hidden mb-3">
+          <div class="bg-gray-800 text-white p-2 text-sm flex justify-between">
+            <span>背景: ${scene.background}</span>
+            <span>场景 ${sceneIndex + 1}</span>
+          </div>
+          <div class="h-32 bg-gray-200 flex items-center justify-center">
+            <i class="fa fa-image text-gray-400 text-3xl"></i>
+          </div>
+        </div>
+      `;
+      
+      let contentPreview = '';
+      
+      if (scene.type === 'dialogue') {
+        // 对话场景预览
+        contentPreview = `
+          <div class="space-y-3">
+            ${scene.dialogues.map((dialogue, idx) => {
+              // 结局标记
+              const endBadge = dialogue.END ? 
+                '<span class="ml-2 px-2 py-0.5 bg-success text-white text-xs rounded">结局</span>' : '';
+              
+              // 跳转标记
+              const toScenesBadge = dialogue.toScenes ? 
+                `<span class="ml-2 px-2 py-0.5 bg-warning text-white text-xs rounded">
+                  跳转 +${dialogue.toScenes} → 场景 ${sceneIndex + 1 + parseInt(dialogue.toScenes)}
+                </span>` : '';
+                
+              return `
+                <div class="border border-gray-200 rounded-lg p-3">
+                  ${dialogue.character ? `
+                    <div class="font-semibold text-primary mb-1">${dialogue.character}${endBadge}${toScenesBadge}</div>
+                  ` : `<div class="text-xs text-gray-500 mb-1">叙述${endBadge}${toScenesBadge}</div>`}
+                  <div class="text-sm text-gray-700 whitespace-pre-line">${dialogue.text || ''}</div>
+                  ${dialogue.body && dialogue.body !== 'none' ? `
+                    <div class="text-xs text-gray-500 mt-1">姿态: ${dialogue.body}</div>
+                  ` : ''}
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `;
+      } else {
+        // 选项场景预览
+        contentPreview = `
+          <div class="space-y-3">
+            <div class="text-sm text-gray-500 mb-2">请选择：</div>
+            ${scene.choices.map((choice, idx) => `
+              <div class="border border-accent/30 bg-accent/5 rounded-lg p-3 hover:border-accent transition-all cursor-pointer">
+                <div class="text-sm text-gray-800">${choice.text || `选项 ${idx + 1}`}</div>
+                <div class="text-xs text-accent mt-1">
+                  跳转 +${choice.nextScene || 1} → 场景 ${sceneIndex + 1 + (choice.nextScene || 1)}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+      
+      previewAreaEl.innerHTML = backgroundPreview + contentPreview;
+    }
+    
+    // 切换场景类型
+    function changeSceneType(newType) {
+      const currentScene = scriptData[currentSceneIndex];
+      
+      if (newType === 'dialogue' && currentScene.type !== 'dialogue') {
+        // 转换为对话场景
+        scriptData[currentSceneIndex] = {
+          type: 'dialogue',
+          background: currentScene.background,
+          dialogues: [{
+            character: "",
+            text: "",
+            body: expressions.length > 0 ? expressions[0] : 'none'
+          }]
+        };
+      } else if (newType === 'choice' && currentScene.type !== 'choice') {
+        // 转换为选项场景
+        scriptData[currentSceneIndex] = {
+          type: 'choice',
+          background: currentScene.background,
+          choices: [{
+            text: "选项1",
+            nextScene: 1
+          }, {
+            text: "选项2",
+            nextScene: 2
+          }]
+        };
+      }
+      
+      // 更新UI
+      renderSceneEditor();
+      renderPreview();
+      renderSceneList();
+      
+      // 更新浮动按钮显示状态
+      floatingAddBtn.style.display = newType === 'dialogue' ? 'flex' : 'none';
+    }
+    
+    // 更新背景
+    function updateBackground() {
+      const background = document.getElementById('backgroundInput').value.trim();
+      if (background) {
+        scriptData[currentSceneIndex].background = background;
+        renderPreview();
+        renderSceneList();
+        showToast('背景已更新');
+      }
+    }
+    
+    // 添加对话或选项（根据当前场景类型）
+    function addDialogueOrChoice() {
+      if (scriptData[currentSceneIndex].type === 'dialogue') {
+        addDialogue();
+      } else {
+        addChoice();
+      }
+    }
+    
+    // 添加对话
+    function addDialogue() {
+      const newDialogue = {
+        character: "",
+        text: "",
+        body: expressions.length > 0 ? expressions[0] : 'none'
+        // toScenes 和 END 默认为空
+      };
+      
+      scriptData[currentSceneIndex].dialogues.push(newDialogue);
+      renderSceneEditor();
+      renderPreview();
+      scrollToLastDialogue();
+    }
+    
+    // 在指定对话后添加新对话
+    function addDialogueAfter(idx) {
+      const newDialogue = {
+        character: "",
+        text: "",
+        body: expressions.length > 0 ? expressions[0] : 'none'
+      };
+      
+      scriptData[currentSceneIndex].dialogues.splice(idx + 1, 0, newDialogue);
+      renderSceneEditor();
+      renderPreview();
+      
+      setTimeout(() => {
+        const newDialogueEl = document.querySelector(`.character-select[data-idx="${idx + 1}"]`);
+        if (newDialogueEl) {
+          newDialogueEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          newDialogueEl.focus();
+        }
+      }, 100);
+    }
+    
+    // 滚动到最后一个对话
+    function scrollToLastDialogue() {
+      setTimeout(() => {
+        const dialogues = document.querySelectorAll('.character-select');
+        if (dialogues.length > 0) {
+          const lastDialogue = dialogues[dialogues.length - 1];
+          lastDialogue.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          lastDialogue.focus();
+        }
+      }, 100);
+    }
+    
+    // 更新对话
+    function updateDialogue(idx) {
+      const character = document.querySelector(`.character-select[data-idx="${idx}"]`).value;
+      const text = document.querySelector(`.text-input[data-idx="${idx}"]`).value;
+      const body = document.querySelector(`.body-select[data-idx="${idx}"]`).value;
+      const toScenes = document.querySelector(`.to-scenes-input[data-idx="${idx}"]`).value;
+      const end = document.querySelector(`.end-select[data-idx="${idx}"]`).value;
+      
+      // 构建对话对象，只包含有值的属性
+      const dialogue = {
+        character,
+        text,
+        body
+      };
+      
+      // 只有当有值时才添加toScenes属性
+      if (toScenes !== '') {
+        dialogue.toScenes = parseInt(toScenes);
+      }
+      
+      // 只有当选择了结局时才添加END属性
+      if (end) {
+        dialogue.END = end;
+      }
+      
+      scriptData[currentSceneIndex].dialogues[idx] = dialogue;
+      
+      renderPreview();
+      renderSceneList(); // 更新场景列表中的标记
+      showToast('对话已更新');
+    }
+    
+    // 删除对话
+    function deleteDialogue(idx) {
+      if (scriptData[currentSceneIndex].dialogues.length <= 1) {
+        showToast('至少保留一个对话', 'error');
+        return;
+      }
+      
+      if (confirm('确定要删除这个对话吗？')) {
+        scriptData[currentSceneIndex].dialogues.splice(idx, 1);
+        renderSceneEditor();
+        renderPreview();
+        renderSceneList();
+      }
+    }
+    
+    // 移动对话位置
+    function moveDialogue(idx, direction) {
+      const newIdx = idx + direction;
+      const dialogues = scriptData[currentSceneIndex].dialogues;
+      
+      if (newIdx >= 0 && newIdx < dialogues.length) {
+        [dialogues[idx], dialogues[newIdx]] = [dialogues[newIdx], dialogues[idx]];
+        renderSceneEditor();
+        renderPreview();
+        
+        setTimeout(() => {
+          const movedDialogueEl = document.querySelector(`.character-select[data-idx="${newIdx}"]`);
+          if (movedDialogueEl) {
+            movedDialogueEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 100);
+      }
+    }
+    
+    // 添加选项
+    function addChoice() {
+      const newChoice = {
+        text: `选项 ${scriptData[currentSceneIndex].choices.length + 1}`,
+        nextScene: 1
+      };
+      
+      scriptData[currentSceneIndex].choices.push(newChoice);
+      renderSceneEditor();
+      renderPreview();
+      
+      setTimeout(() => {
+        const choices = document.querySelectorAll('.choice-text-input');
+        if (choices.length > 0) {
+          const lastChoice = choices[choices.length - 1];
+          lastChoice.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          lastChoice.focus();
+        }
+      }, 100);
+    }
+    
+    // 更新选项
+    function updateChoice(idx) {
+      const text = document.querySelector(`.choice-text-input[data-idx="${idx}"]`).value;
+      const nextScene = document.querySelector(`.choice-nextscene-input[data-idx="${idx}"]`).value;
+      
+      if (!text.trim()) {
+        showToast('选项文本不能为空', 'error');
+        return;
+      }
+      
+      if (isNaN(nextScene) || nextScene === '') {
+        showToast('请输入有效的跳转值', 'error');
+        return;
+      }
+      
+      scriptData[currentSceneIndex].choices[idx] = {
+        text,
+        nextScene: parseInt(nextScene)
+      };
+      
+      renderPreview();
+      showToast('选项已更新');
+    }
+    
+    // 删除选项
+    function deleteChoice(idx) {
+      if (scriptData[currentSceneIndex].choices.length <= 1) {
+        showToast('至少保留一个选项', 'error');
+        return;
+      }
+      
+      if (confirm('确定要删除这个选项吗？')) {
+        scriptData[currentSceneIndex].choices.splice(idx, 1);
+        renderSceneEditor();
+        renderPreview();
+      }
+    }
+    
+    // 移动选项位置
+    function moveChoice(idx, direction) {
+      const newIdx = idx + direction;
+      const choices = scriptData[currentSceneIndex].choices;
+      
+      if (newIdx >= 0 && newIdx < choices.length) {
+        [choices[idx], choices[newIdx]] = [choices[newIdx], choices[idx]];
+        renderSceneEditor();
+        renderPreview();
+        
+        setTimeout(() => {
+          const movedChoiceEl = document.querySelector(`.choice-text-input[data-idx="${newIdx}"]`);
+          if (movedChoiceEl) {
+            movedChoiceEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 100);
+      }
+    }
+    
+    // 添加场景
+    function addScene() {
+      const newScene = {
+        type: "dialogue",
+        background: "bg_default",
+        dialogues: [
+          {
+            character: "",
+            text: "",
+            body: expressions.length > 0 ? expressions[0] : 'none'
+          }
+        ]
+      };
+      
+      scriptData.push(newScene);
+      selectScene(scriptData.length - 1);
+    }
+    
+    // 删除场景
+    function deleteScene(index) {
+      if (scriptData.length <= 1) {
+        showToast('至少保留一个场景', 'error');
+        return;
+      }
+      
+      if (confirm('确定要删除这个场景吗？')) {
+        scriptData.splice(index, 1);
+        const newIndex = Math.min(index, scriptData.length - 1);
+        selectScene(newIndex);
+      }
+    }
+    
+    // 导出JSON
+    function exportJSON() {
+      // 深拷贝数据以避免修改原始数据
+      const exportData = JSON.parse(JSON.stringify(scriptData));
+      
+      // 处理每个场景
+      exportData.forEach(scene => {
+        // 移除type字段，因为原始格式中没有
+        delete scene.type;
+        
+        if (scene.dialogues) {
+          // 处理每个对话
+          scene.dialogues.forEach(dialogue => {
+            // 如果body为"none"，则删除该字段
+            if (dialogue.body === "none") {
+              delete dialogue.body;
+            }
+            
+            // 如果toScenes为空，则删除该字段
+            if (dialogue.toScenes === undefined || dialogue.toScenes === null || dialogue.toScenes === '') {
+              delete dialogue.toScenes;
+            }
+          });
+        }
+      });
+      
+      const jsonStr = JSON.stringify(exportData, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'advanced_script_data.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      showToast('JSON已导出');
+    }
+    
+    // 新建剧本
+    function createNewScript() {
+      if (confirm('确定要创建新剧本吗？当前内容将被清空。')) {
+        scriptData = [
+          {
+            type: "dialogue",
+            background: "",
+            dialogues: [
+              {
+                character: "",
+                text: "",
+                body: expressions.length > 0 ? expressions[0] : 'none'
+              }
+            ]
+          }
+        ];
+        selectScene(0);
+        showToast('已创建新剧本');
+      }
+    }
+    
+    // 显示提示消息
+    function showToast(message, type = 'success') {
+      const existingToast = document.querySelector('.toast-notification');
+      if (existingToast) {
+        existingToast.remove();
+      }
+      
+      const toast = document.createElement('div');
+      toast.className = `toast-notification fixed bottom-4 right-4 px-4 py-2 rounded-md shadow-lg transition-all transform translate-y-0 opacity-100 ${
+        type === 'success' ? 'bg-green-500' : 'bg-red-500'
+      } text-white`;
+      toast.textContent = message;
+      
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-4');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+    
+    // 初始化应用
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
